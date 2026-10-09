@@ -1,1 +1,1 @@
-export default function Footer({ language }) { const id = language === 'id'; return <footer><p>MARIZKY AKMAL © 2026</p><div><a href="mailto:marizkyakmal@gmail.com">{id ? 'Email' : 'Email'}</a></div><p>{id ? 'DIBUAT DI BANDUNG' : 'MADE IN BANDUNG'}</p></footer> }
+export default function Footer({ language }) { const id = language === 'id'; return <footer id="footer"><p>MARIZKY AKMAL © 2026</p><div><a href="mailto:marizkyakmal@gmail.com">{id ? 'Email' : 'Email'}</a></div><p>{id ? 'DIBUAT DI BANDUNG' : 'MADE IN BANDUNG'}</p></footer> }

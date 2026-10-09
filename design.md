@@ -3,7 +3,7 @@
 > **Audience:** coding agent (Antigravity / Codex / Cursor). **Owner:** Akmal.
 > **Status:** replaces every previous design.md.
 > **Removed:** the retro-editorial direction (paper `#EAE0C8`, maroon `#3D0808`, brass, stamp red; Fraunces / Source Serif 4 / IBM Plex Mono). Do not reintroduce any of it.
-> **Kept:** the site *structure* (section order, scroll-morphing card, About layout, simple project list, no hamburger nav).
+> **Kept:** the site *structure* (section order, scroll-morphing card, About layout, project content, no hamburger nav).
 > **Visual system:** derived from the Hermes Agent Desktop page (`hermes-agent.nousresearch.com/desktop`). Tags: **(H)** = extracted from Hermes' CSS; **(P)** = from the owner-supplied blue scale `--primary-50…950` (blue + white dominant, see §4.2); **(ours)** = our own decision because no usable source value existed.
 > **Conflict order:** this file → PRD → `tech_stack_portfolio.md`.
 
@@ -32,8 +32,8 @@ Placeholders that must stay visible until Akmal fills them: `[FULL NAME]`, `[ISI
 | FR-1 | One page, six sections in fixed order: **Home → Capabilities → About → Projects → FAQ → Contact**, then footer. |
 | FR-2 | Persistent navigation with anchor links. **No hamburger at any breakpoint.** Active section is highlighted (scrollspy). |
 | FR-3 | A pinned nav bar slides in once the header has scrolled out of view. |
-| FR-4 | One persistent **MorphCard** that changes position/rotation per section (md and up; static below md). |
-| FR-5 | Projects = simple list of three: Klinik Online, Foody, Portfolio Website. Each row: name, 1–2 sentence blurb that includes result/impact, stack tags, links. **No case-study pages.** Quality over quantity — do not add filler projects. |
+| FR-4 | One persistent **MorphCard** that changes position/rotation per section and stays visible at every viewport size. |
+| FR-5 | Projects = three scroll-linked image cards: Klinik Online, Foody, Portfolio Website. Each card: name, 1–2 sentence blurb, context, stack tags, and available link. **No case-study pages.** Quality over quantity — do not add filler projects. |
 | FR-6 | About contains: bio, PKL experience (PT Laskar Teknologi Mulia, Jan–Apr 2026), education (S1 Informatika, Itenas), TOEIC 830, "Download CV" (PDF). |
 | FR-7 | FAQ accordion. |
 | FR-8 | Contact form → `POST /api/contact`, with idle / submitting / success / error states. |
@@ -76,7 +76,7 @@ Browser
 
 **Storage:** MySQL holds exactly one table (`contact_messages`). Portfolio content is static TypeScript. **API surface:** one endpoint (`POST /api/contact`) plus Laravel's built-in `GET /up` health route.
 
-**State:** no global store. Local component state + one small context (`ActiveProjectContext`) so hovering a project row can swap the MorphCard image.
+**State:** no global store. Local state passes the active scrolling project image to the MorphCard.
 
 ---
 
@@ -86,8 +86,8 @@ Browser
 |---|------|---------|---------|-----------------|
 | 1 | `home` | blue | Hero: centered card with full name; "FULLSTACK" aligned left, "DEVELOPER" aligned right | centered |
 | 2 | `capabilities` | blue | Heading + 2×2 capability grid (left); right column is an empty slot for the card | moves right |
-| 3 | `about` | blue | Layout follows the portavia reference (title / text / element positions), **excluding its numbered indicators** | rotates 360° horizontally |
-| 4 | `projects` | paper | Simple project list | becomes a vertical card rotated 90° → rectangular image card |
+| 3 | `about` | blue | Layout follows the portavia reference (title / text / element positions), **excluding its numbered indicators** | remains to the right before rotating toward Experience |
+| 4 | `projects` | blue | Three scroll-linked image cards; active project image replaces the profile image during the transition | turns horizontal and cross-fades to the active project image |
 | 5 | `faq` | paper | Accordion | released (hidden or docked, see §5.2) |
 | 6 | `contact` | blue | Form + short copy | hidden |
 | — | footer | blue | Ghost wordmark, links, copyright | hidden |
@@ -335,7 +335,7 @@ Rule: **blue surface → `secondary`; paper surface → `primary`.**
 | Nav link (header) | `label` 14px, opacity .85 | opacity 1 (instant) | — | pinned bar: 12px, opacity .8 → 1. Hermes uses .8 / .6; both are too faint for AA with this palette (§4.9) |
 | Footer link chip | transparent, height 18px, `padding-inline 4px`, `margin-left -4px` | bg `--fg`, text `--bg` (inverted), right corners `2px` | — | `transition: colors 150ms`, hover 0 ms (H) |
 | Accordion row | transparent | transparent | bg `--bg-pressed` while a button inside is `:active` | open row stays transparent (H) |
-| Project row | transparent | bg `--bg-2`, instant (ours, mirrors accordion) | bg `--bg-pressed` | swaps MorphCard image |
+| Project image card | blue frame, white copy | slight image scale | — | scroll progress scales the stack and updates the MorphCard image |
 | Form field | 1px `--line`, transparent bg, radius 0 | — | — | focus: `outline: 1px solid currentColor; outline-offset: 2px` |
 
 **Header nav (desktop ≥ md)** — 3-column grid `1fr auto 1fr`, `column-gap: 24px`, `padding-top: 40px`, `padding-bottom: 20px` (H).
@@ -376,7 +376,7 @@ Rule: **blue surface → `secondary`; paper surface → `primary`.**
 | Section fade/slide-in | 500–600 ms ease-out, `translateY(6px)` | (H) `animate-fade-in` / `slide-up` |
 | MorphCard | scroll-linked (no time-based easing) | §5.1 |
 
-`@media (prefers-reduced-motion: reduce)`: no arc animation, no slide-in, MorphCard static, `scroll-behavior: auto`.
+`@media (prefers-reduced-motion: reduce)`: no arc animation, no slide-in, MorphCard stays centered and static, `scroll-behavior: auto`.
 
 ### 4.8 Breakpoints (H)
 
@@ -399,9 +399,9 @@ Hermes/Nous logo, wing mark, "Nous girl" art, hero/platform/footer artwork, copy
 
 ## 5. Section specs
 
-### 5.1 MorphCard (persistent, md and up)
+### 5.1 MorphCard (persistent, all viewport sizes)
 
-**Behavior (from the structure Akmal specified):** centered on Home → moves right on Capabilities → rotates 360° horizontally on About → on Projects becomes a vertical card rotated 90° into a rectangular image card.
+**Behavior (from the structure Akmal specified):** centered on Home → moves right on Capabilities and About → rotates 180° horizontally while entering Experience → turns into the active project image on Projects. Keep the card visible on small screens; reduce its size and right offset to fit.
 
 **Rendering:** one element, `position: fixed; inset: 0; margin: auto`, `pointer-events: none`, `z-index: 40` (below nav 110, frame 100). Wrapper has `perspective: 1200px`; card has `transform-style: preserve-3d`. Base size is portrait 3:4, `width: clamp(220px, 26vw, 380px)`. Rotating it 90° on Projects makes it landscape without any resize. Only `transform` and `opacity` are animated.
 
@@ -409,14 +409,12 @@ Hermes/Nous logo, wing mark, "Nous girl" art, hero/platform/footer artwork, copy
 
 | Anchor | `x` | `scale` | `rotateY` | `rotateZ` | Face content |
 |--------|-----|---------|-----------|-----------|--------------|
-| `home` top | `0vw` | 1 | 0 | 0 | full name |
-| `capabilities` top | `0vw` | 1 | 0 | 0 | full name |
-| `capabilities` center | `28vw` | .92 | 0 | 0 | full name |
-| `about` top | `28vw` | .92 | 0 | 0 | full name |
-| `about` bottom | `28vw` | .92 | 360 | 0 | full name |
-| `projects` top | `28vw` | .92 | 360 | 0 | full name → cross-fades to project image |
-| `projects` center | `20vw` | 1 | 360 | 90 | active project image |
-| `faq` top | `20vw` | 1 | 360 | 90 | fades out (`opacity 0`) |
+| `top` (Home) | `0vw` | 1 | 0 | 0 | profile image |
+| `capabilities` | `30vw` (desktop), `18vw` (small screens) | .92 | 0 | 0 | profile image |
+| `about` | right | .92 | 0 | 0 | profile image |
+| `experience` | `0vw` | .9 | 180 | 0 | profile image on the reverse face |
+| `projects` | `0vw` | .9 | 180 | 90 | active project image cross-fades over the reverse face |
+| `faq` | `0vw` | .9 | 180 | 90 | active project image, then fades out toward Contact |
 
 `about`'s x-position during the spin is an assumption (stays right). Confirm against the reference.
 
@@ -424,7 +422,7 @@ Hermes/Nous logo, wing mark, "Nous girl" art, hero/platform/footer artwork, copy
 
 ```tsx
 // src/components/morph/MorphCard.tsx
-import { motion, useScroll, useTransform, useReducedMotion } from "motion/react";
+import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import { MORPH_KEYS } from "./keys";
 import { useAnchorPositions } from "./useAnchorPositions";
 
@@ -437,11 +435,11 @@ export function MorphCard() {
   const rotateY = useTransform(scrollY, stops, MORPH_KEYS.map(k => k.rotateY));
   const rotateZ = useTransform(scrollY, stops, MORPH_KEYS.map(k => k.rotateZ));
   const opacity = useTransform(scrollY, stops, MORPH_KEYS.map(k => k.opacity ?? 1));
-  if (reduce || stops.length < 2) return null; // static fallback handled in sections
+  if (stops.length < 2) return null; // wait until section positions are measured
 
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 z-40 grid place-items-center [perspective:1200px]">
-      <motion.div style={{ x, scale, rotateY, rotateZ, opacity }} className="card" />
+      <motion.div style={{ x: reduce ? 0 : x, scale: reduce ? 1 : scale, rotateY: reduce ? 0 : rotateY, rotateZ: reduce ? 0 : rotateZ, opacity: reduce ? 1 : opacity }} className="card" />
     </div>
   );
 }
@@ -459,9 +457,9 @@ export const MORPH_KEYS: MorphKey[] = [ /* rows from the table above */ ];
 
 `useAnchorPositions`: measure each section's `offsetTop`/height, convert `at` to a px scroll offset (`top − innerHeight/2`, etc.), re-measure with `ResizeObserver` on `document.body`, dedupe, and sort ascending. `useTransform` throws/misbehaves on non-monotonic input ranges — guard that.
 
-**Below md and reduced-motion:** no fixed card. Home renders the card statically inline (name card); other sections render no card; Projects rows show their thumbnail inline. Do not try to scale the morph down to phones.
+**Small screens and reduced-motion:** keep the profile card visible at a narrower portrait size and reduce its horizontal travel. With reduced motion enabled, keep it centered and static. Projects cards show full-width thumbnails in normal document flow.
 
-**Project image swap:** `ActiveProjectContext` is set by row `onPointerEnter/onFocus`; the card face cross-fades images (`opacity`, 150 ms). Images: AVIF/WebP, explicit `width`/`height`.
+**Project image swap:** the active project card updates the reverse face image as the project stack scrolls. Cross-fade between image changes (`opacity`, 350 ms). Images: AVIF/WebP, explicit `width`/`height` where available.
 
 ### 5.2 Home (`#home`, blue)
 - `hero` type heading row: `FULLSTACK` left-aligned, `DEVELOPER` right-aligned (`display:flex; justify-content: space-between` on md+; stacked and left/right via `align-self` below md). Centered card between/behind per the original design intent — confirm z-order with Akmal; default: card above text.
@@ -482,11 +480,14 @@ export const MORPH_KEYS: MorphKey[] = [ /* rows from the table above */ ];
 - Layout from `docs/reference/portavia-about.png` (title / text / element positions), no numbered indicators.
 - Blocks: `[BIO]`; experience — PKL at PT Laskar Teknologi Mulia, Jan–Apr 2026; education — S1 Informatika, Itenas; TOEIC 830; stack summary.
 - `secondary` button "Download CV" → `/cv/akmal-cv.pdf` (`download` attribute). File lives in `frontend/public/cv/`.
-- MorphCard spins 360° across this section's scroll range.
+- MorphCard rotates to 180° horizontally while entering this section.
 
-### 5.5 Projects (`#projects`, paper)
-- Simple list, one row per project, `border-top: 1px dotted var(--line)`, `padding-block: 20px`.
-- Row layout (md+): name (`title` 36px) | blurb (`body`) | tags (chips) | links (`ghost` buttons "Repo", "Live"). Mobile: stacked.
+### 5.5 Projects (`#projects`, blue)
+- Invert the previous Projects surface: blue `--c-blue` background with white `--c-white` text, matching the blue section treatment used by Home and Contact. Keep pale blue image cards readable with white copy overlays.
+- Replace the simple list with three large, sticky image cards that move and scale with scroll progress. Cards stack under the viewport as the next project enters; do not lock wheel or touch scrolling.
+- The persistent profile card turns horizontal and cross-fades into the active project image as the Projects section enters. The image updates as the project stack scrolls.
+- Each image card uses a project title, short description, one context line, stack tags, and available repo/demo link. Use native lazy loading and AVIF/WebP for local production screenshots; supplied remote sample images are temporary visuals and must be replaced with real project screenshots before production.
+- Respect `prefers-reduced-motion`: show the project cards in normal document flow without scroll-linked scaling.
 - Content (`src/content/projects.ts`):
 
 | Project | Blurb (draft — only stated facts) | Result/impact |
@@ -762,7 +763,7 @@ No auth interceptor — there is no auth.
 | D3 | Contact: DB first, then mail | Mail only | One table + migration | never (cheap insurance) |
 | D4 | `api.` subdomain | Same-origin | CORS config | host can't do subdomains |
 | D5 | `motion` `useScroll` for MorphCard | GSAP ScrollTrigger / CSS scroll-driven animations | +bundle weight (check analyzer) | bundle > 150 KB gzip |
-| D6 | MorphCard md+ only | Scale down for phones | Mobile is plainer | never |
+| D6 | MorphCard on all viewport sizes | Reduce its size and offset on phones | The section motion stays visible at narrow widths | profile card is hidden on any viewport |
 | D7 | Barlow Condensed / Inter / JetBrains Mono | Hermes fonts | Not pixel-identical | licensed fonts bought |
 | D8 | Axios (already named in the PRD blurb) | native `fetch` wrapper | ~13 KB gzip for one POST | LCP budget is tight → swap to fetch |
 | D9 | Scrollable anchor strip on mobile | Hamburger (Hermes) | Strip needs scroll affordance | > 6 sections |
@@ -777,7 +778,7 @@ No auth interceptor — there is no auth.
 
 1. `[FULL NAME]`, `[BIO]`, `[ISI DETAIL]` (Foody), `[ISI HASIL]` ×2, social URLs.
 2. About layout screenshot → `docs/reference/portavia-about.png`.
-3. MorphCard: card z-order vs. "FULLSTACK/DEVELOPER" text on Home; x-position during the About spin; tune keyframes visually.
+3. MorphCard: card z-order vs. "FULLSTACK/DEVELOPER" text on Home; right offset on small screens; tune keyframes visually.
 4. Confirm cPanel plan has Terminal access and PHP 8.2+.
 5. Confirm A1–A5.
 6. Hermes `--hpv2-shadow-*` values were not available → `--shadow-*` are ours; adjust by eye.
@@ -792,7 +793,7 @@ No auth interceptor — there is no auth.
 - [ ] Lighthouse mobile: Performance ≥ 90, Accessibility ≥ 95, Best Practices ≥ 95.
 - [ ] No text < 12px; no small text below 4.5:1 contrast; inputs 16px.
 - [ ] No raw hex outside `tokens.css`; palette roles match §4.2.1.
-- [ ] Reduced-motion verified (OS setting on): no arc animation, no MorphCard, no smooth scroll.
+- [ ] Reduced-motion verified (OS setting on): no arc animation, a static centered MorphCard, and no smooth scroll.
 - [ ] 5 backend tests green; `APP_DEBUG=false` verified in prod; `config:cache` run after final `.env`.
 - [ ] Real contact submission received by email **and** present in `contact_messages`.
 - [ ] No `[ISI` / `[FULL NAME]` / `[BIO]` strings in the production bundle.

@@ -1,13 +1,44 @@
 :root {
-  font-family: 'Source Serif 4', Georgia, serif;
-  color: #1C1410;
-  background: #EAE0C8;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: var(--fg, #f2f2f2);
+  background-color: var(--c-blue, #0034f2);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-body { margin: 0; min-width: 320px; background: #EAE0C8; }
-button, input, textarea { font: inherit; }
-a { color: inherit; }
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: auto;
+  background-color: var(--c-blue, #0034f2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background-color: var(--c-blue, #0034f2);
+  color: var(--fg, #f2f2f2);
+}
+
+button, input, textarea {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: var(--selection-bg, #f2f200);
+  color: var(--selection-fg, #0034f2);
+}
